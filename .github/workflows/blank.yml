@@ -2,17 +2,16 @@ name: Update Metal Price
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # 改為每 5 分鐘跑一次比較穩，GitHub 比較不會阻擋
+    - cron: '*/5 * * * *'
   push:
     branches: [ "main" ]
   workflow_dispatch: 
 
 env:
-  # 解決你看到的 Node.js 20 警告，強制使用 Node 24
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build_and_deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write 
@@ -32,13 +31,11 @@ jobs:
       - name: Run update script
         run: python update_price.py
 
-
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # 關鍵：先拉取最新變更防止衝突
-          git pull origin main --rebase
+          # 重要：先拉取遠端最新資料，避免 data.json 衝突
+          git pull --rebase origin main
           git add index.html data.json
-          git commit -m "Update history and charts: $(date)" || echo "No changes"
-          git push
+          git diff --staged --quiet || (git commit -m "Update prices and charts" && git push)
