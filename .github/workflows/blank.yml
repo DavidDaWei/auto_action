@@ -2,26 +2,27 @@ name: Update Metal Price
 
 on:
   schedule:
-    # 這裡設定每分鐘執行一次 (雖然會有延遲)
+    # 這裡設定每分鐘執行一次 (GitHub 實際上會有延遲)
     - cron: '* * * * *'
   push:
     branches: [ "main" ]
-  workflow_dispatch: # 允許手動點擊執行
+  workflow_dispatch: 
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 賦予寫入權限，才能把更新後的 HTML 推回 Repo
+      contents: write 
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: setup-python@v4
+        # 修正處：補上了 actions/ 前綴
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: pip install requests
@@ -34,5 +35,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          # 只有當檔案有變動時才 commit，避免報錯
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update price: $(date)" && git push)
