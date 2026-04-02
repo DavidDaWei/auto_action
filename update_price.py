@@ -2,67 +2,82 @@ import requests
 import datetime
 import re
 
+# 轉換常數
+OZ_TO_G = 31.1034768
+G_TO_TAEL = 37.5
+
 def get_taiwan_data():
     url = "https://pm.shiny.com.tw/ajax_chartupdate.php?w=arw"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
+    headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         response = requests.get(url, headers=headers, timeout=15)
-        response.encoding = 'utf-8' # 強制設定編碼
+        response.encoding = 'utf-8'
         raw_html = response.text
         
-        # 修正後的 Regex：考慮到 </span> 標籤與可能的空格
-        def extract(label):
-            # 匹配模式：標籤名稱</span> 接著任意空格 接著 買價/賣價 的 span
+        items = ["黃金", "白銀", "鉑金", "鈀金", "美匯"]
+        rows_html = ""
+        
+        for label in items:
+            # 匹配 買價/賣價
             pattern = label + r'</span>\s*<span style="color: #7129c2">([\d,.]+)</span>/<span style="color: #7129c2">([\d,.]+)</span>'
             match = re.search(pattern, raw_html)
+            
             if match:
-                return f"<b>{label}</b>: {match.group(1)} / {match.group(2)}"
-            return f"<b>{label}</b>: 解析失敗"
-
-        results = [extract("黃金"), extract("白銀"), extract("鉑金"), extract("鈀金"), extract("美匯")]
-        return "<br>".join(results)
+                buy_oz = float(match.group(1).replace(',', ''))
+                sell_oz = float(match.group(2).replace(',', ''))
+                
+                # 計算每公克
+                buy_g = buy_oz / OZ_TO_G
+                sell_g = sell_oz / OZ_TO_G
+                
+                # 計算每台兩
+                buy_tael = buy_g * G_TO_TAEL
+                sell_tael = sell_g * G_TO_TAEL
+                
+                rows_html += f"""
+                <tr>
+                    <td class="cat-name">{label}</td>
+                    <td class="buy-sell">{buy_oz:,.0f} / {sell_oz:,.0f}</td>
+                    <td>
+                        <span class="converted">每公克：{buy_g:,.2f} / {sell_g:,.2f}</span>
+                        <span class="converted">每台兩：{buy_tael:,.0f} / {sell_tael:,.0f}</span>
+                    </td>
+                </tr>
+                """
+            else:
+                rows_html += f"<tr><td class='cat-name'>{label}</td><td colspan='2'>解析失敗</td></tr>"
+        
+        return rows_html
     except Exception as e:
-        return f"台灣來源連線失敗: {e}"
+        return f"<tr><td colspan='3'>連線失敗: {e}</td></tr>"
 
-def get_international_price():
-    # 換一個對 GitHub Actions 較友善的 API (Gold-API)
-    url = "https://api.gold-api.com/ge/gold"
+def get_intl_price():
+    # 優先使用 GoldAPI，備援 Binance
     try:
-        r = requests.get(url, timeout=10)
-        data = r.json()
-        # 取得金價並格式化
-        price = float(data['price'])
-        return f"${price:,.2f} USD"
+        r = requests.get("https://api.gold-api.com/ge/gold", timeout=10)
+        return f"${float(r.json()['price']):,.2f}"
     except:
-        # 如果上面失敗，備援回 Binance
         try:
             r = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT", timeout=5)
-            return f"${float(r.json()['price']):,.2f} USD"
+            return f"${float(r.json()['price']):,.2f}"
         except:
-            return "國際來源獲取失敗"
+            return "暫無數據"
 
-def update_html(tw_data, int_price):
+def update_html(tw_rows, int_price):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
     with open("index.html", "r", encoding="utf-8") as f:
         content = f.read()
     
-    # 使用 .replace 或 re.sub 更新內容
-    # 這裡確保匹配時不被換行符號干擾
-    content = re.sub(r'id="taiwan-data">.*?</div>', f'id="taiwan-data">{tw_data}</div>', content, flags=re.DOTALL)
-    content = re.sub(r'id="gold-price">.*?</div>', f'id="gold-price">{int_price}</div>', content, flags=re.DOTALL)
-    content = re.sub(r'id="update-time">.*?</span>', f'id="update-time">{now} (UTC)</span>', content)
+    # 替換邏輯
+    content = re.sub(r'<tbody id="taiwan-data">.*?</tbody>', f'<tbody id="taiwan-data">{tw_rows}</tbody>', content, flags=re.DOTALL)
+    content = re.sub(r'id="gold-price">.*?</div>', f'id="gold-price">{int_price}</div>', content)
+    content = re.sub(r'id="update-time">.*?</span>', f'id="update-time">{now}</span>', content)
     
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(content)
 
 if __name__ == "__main__":
-    print("開始獲取數據...")
     tw = get_taiwan_data()
-    print(f"台灣數據: {tw}")
-    bn = get_international_price()
-    print(f"國際數據: {bn}")
+    bn = get_intl_price()
     update_html(tw, bn)
-    print("HTML 更新完成")
+    print("數據轉換與更新完成！")
