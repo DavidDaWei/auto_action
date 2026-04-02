@@ -35,10 +35,10 @@ jobs:
 
       - name: Commit and Push changes
         run: |
-                git config --global user.name "github-actions[bot]"
-                git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                # 先移除壞掉的大檔案，強迫 Git 歸零
-                git rm --cached index.html || echo "File already untracked"
-                git add index.html
-                git commit -m "Fix: Reset 3GB file and update price"
-                git push --force
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # 關鍵：先拉取最新變更防止衝突
+          git pull origin main --rebase
+          git add index.html data.json
+          git commit -m "Update history and charts: $(date)" || echo "No changes"
+          git push
