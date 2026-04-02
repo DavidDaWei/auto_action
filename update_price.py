@@ -108,4 +108,97 @@ HTML_TEMPLATE = """
 """
 
 def get_current_data():
-    """
+    """從網站抓取當前數據"""
+    url = "https://pm.shiny.com.tw/ajax_chartupdate.php?w=arw"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    try:
+        resp = requests.get(url, headers=headers, timeout=15)
+        resp.encoding = 'utf-8'
+        raw = resp.text
+        # 以目前時間 (時:分) 作為 X 軸標籤
+        point = {"time": datetime.datetime.now().strftime("%H:%M")}
+        
+        # 解析數據 (抓取標籤後的第一個數值)
+        for label, key in [("黃金", "gold"), ("白銀", "silver"), ("美匯", "usd")]:
+            pattern = label + r'</span>\s*<span style="color: #7129c2">([\d,.]+)</span>'
+            match = re.search(pattern, raw)
+            if match:
+                # 網站抓到的數字 (4,500 左右) 實際上是台幣/公克
+                val = float(match.group(1).replace(',', ''))
+                point[key] = val
+        
+        # 確保必要的數據都有抓到
+        if "gold" in point:
+            return point
+        return None
+    except Exception as e:
+        print(f"抓取數據發生錯誤: {e}")
+        return None
+
+def process_and_save():
+    """讀取、更新歷史紀錄並生成網頁"""
+    file_json = 'data.json'
+    history = []
+    
+    # 1. 讀取現有的歷史數據
+    if os.path.exists(file_json):
+        with open(file_json, 'r', encoding='utf-8') as f:
+            try:
+                history = json.load(f)
+            except:
+                history = []
+
+    # 2. 獲取新數據並加入歷史紀錄
+    new_data = get_current_data()
+    if new_data:
+        history.append(new_data)
+        print(f"成功加入新數據: {new_data}")
+    
+    # 3. 限制歷史紀錄筆數
+    if len(history) > MAX_HISTORY:
+        history = history[-MAX_HISTORY:]
+
+    # 4. 存回 JSON 檔案 (data.json)
+    with open(file_json, 'w', encoding='utf-8') as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+    # 5. 準備表格顯示內容 (使用最後一筆數據)
+    last_point = history[-1] if history else {}
+    tw_rows_html = ""
+    
+    for label, key in [("黃金", "gold"), ("白銀", "silver"), ("美匯", "usd")]:
+        val = last_point.get(key, 0)
+        if key == "usd":
+            tw_rows_html += f"<tr><td class='cat-name'>{label}</td><td class='main-price'>{val}</td><td>--</td></tr>"
+        else:
+            # 換算邏輯：val 是公克價
+            g_price = val
+            tael_price = g_price * G_TO_TAEL
+            oz_price = g_price * OZ_TO_G
+            
+            tw_rows_html += f"""
+            <tr>
+                <td class='cat-name'>{label}</td>
+                <td class='main-price'>{g_price:,.0f} 元/g</td>
+                <td>
+                    <span class='converted'>每台兩：{tael_price:,.0f} 元</span>
+                    <span class='converted'>每盎司：{oz_price:,.0f} 元</span>
+                </td>
+            </tr>
+            """
+
+    # 6. 生成最終的 index.html
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    final_content = HTML_TEMPLATE.format(
+        tw_rows=tw_rows_html,
+        history_json=json.dumps(history),
+        update_time=now_str,
+        history_count=len(history)
+    )
+    
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(final_content)
+
+if __name__ == "__main__":
+    process_and_save()
+    print("更新任務順利完成！")
