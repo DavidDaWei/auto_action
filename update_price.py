@@ -2,65 +2,53 @@ import requests
 import datetime
 import re
 
-def get_price():
-    # 準備多個 API 來源與模擬瀏覽器的 Header
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    
-    # 來源 1: Binance (PAXG 價格)
-    # 來源 2: Coinbase (PAXG 價格)
-    # 來源 3: Gate.io (PAXG 價格)
-    sources = [
-        ("Binance", "https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT"),
-        ("Coinbase", "https://api.coinbase.com/v2/prices/PAXG-USD/spot"),
-        ("Gate.io", "https://data.gateapi.io/api2/1/ticker/paxg_usdt")
-    ]
-    
-    for name, url in sources:
-        try:
-            print(f"正在嘗試從 {name} 獲取數據...")
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                print(f"{name} 回傳錯誤碼: {response.status_code}")
-                continue
-                
-            data = response.json()
-            
-            if name == "Binance":
-                price = float(data['price'])
-            elif name == "Coinbase":
-                price = float(data['data']['amount'])
-            elif name == "Gate.io":
-                price = float(data['last'])
-                
-            print(f"成功獲取價格: {price}")
-            return f"${price:,.2f} USD"
-            
-        except Exception as e:
-            print(f"{name} 請求發生異常: {e}")
-            continue
-            
-    return "獲取失敗 (所有來源皆失效)"
-
-def update_html(price):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+def get_taiwan_data():
+    url = "https://pm.shiny.com.tw/ajax_chartupdate.php?w=arw"
+    headers = {'User-Agent': 'Mozilla/5.0'}
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
-            content = f.read()
+        response = requests.get(url, headers=headers, timeout=15)
+        # 移除多餘的 HTML 標籤以便解析，或直接抓關鍵字
+        raw_html = response.text
         
-        # 使用正則表達式替換內容
-        content = re.sub(r'id="gold-price">.*?</div>', f'id="gold-price">{price}</div>', content)
-        content = re.sub(r'id="update-time">.*?</span>', f'id="update-time">{now} (UTC)</span>', content)
-        
-        with open("index.html", "w", encoding="utf-8") as f:
-            f.write(content)
-        print("HTML 檔案已更新")
+        # 使用正則表達式抓取各項數值 (抓取 買/賣 價格)
+        def extract(label):
+            pattern = label + r' <span style="color: #7129c2">(.*?)</span>/<span style="color: #7129c2">(.*?)</span>'
+            match = re.search(pattern, raw_html)
+            if match:
+                return f"<b>{label}</b>: {match.group(1)} / {match.group(2)}"
+            return f"<b>{label}</b>: 獲取失敗"
+
+        results = [extract("黃金"), extract("白銀"), extract("鉑金"), extract("鈀金"), extract("美匯")]
+        return "<br>".join(results)
     except Exception as e:
-        print(f"更新 HTML 失敗: {e}")
+        return f"台灣來源更新失敗: {e}"
+
+def get_binance_price():
+    # 這是原本的國際價格來源
+    url = "https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT"
+    try:
+        r = requests.get(url, timeout=10)
+        return f"${float(r.json()['price']):,.2f} USD"
+    except:
+        return "國際來源獲取失敗"
+
+def update_html(tw_data, binance_price):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open("index.html", "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    # 替換台灣數據
+    content = re.sub(r'id="taiwan-data">.*?</div>', f'id="taiwan-data">{tw_data}</div>', content)
+    # 替換國際數據
+    content = re.sub(r'id="gold-price">.*?</div>', f'id="gold-price">{binance_price}</div>', content)
+    # 替換更新時間
+    content = re.sub(r'id="update-time">.*?</span>', f'id="update-time">{now} (UTC)</span>', content)
+    
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(content)
 
 if __name__ == "__main__":
-    current_price = get_price()
-    update_html(current_price)
+    tw = get_taiwan_data()
+    bn = get_binance_price()
+    update_html(tw, bn)
+    print("更新完成！")
