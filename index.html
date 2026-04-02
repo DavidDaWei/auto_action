@@ -3,29 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>貴金屬價格監控</title>
+    <title>貴金屬實時監報</title>
     <style>
-        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .taiwan-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9em; line-height: 1.6; }
-        .taiwan-box h3 { margin-top: 0; color: #795548; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .price-box { font-size: 2.2em; color: #d4af37; font-weight: bold; margin: 10px 0; }
-        .time { color: #888; font-size: 0.8em; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #34006e; color: white; margin-right: 5px; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; font-size: 1.5em; }
+        
+        .price-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.95em; }
+        .price-table th { background: #f8f9fa; color: #666; font-weight: 600; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
+        .price-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .price-table tr:hover { background: #fffdf5; }
+        
+        .cat-name { font-weight: bold; color: #34006e; width: 80px; }
+        .buy-sell { color: #7129c2; font-family: monospace; font-weight: 600; }
+        .converted { font-size: 0.85em; color: #666; background: #fdf6e3; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; }
+        
+        .intl-box { text-align: center; background: #333; color: #d4af37; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .intl-price { font-size: 2.5em; font-weight: bold; margin: 5px 0; }
+        .footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 20px; }
+        
+        @media (max-width: 600px) {
+            .price-table { font-size: 0.85em; }
+            .container { padding: 15px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="taiwan-box">
-            <h3>🇹🇼 台灣實時行情 (炫麗)</h3>
-            <div id="taiwan-data"><b>黃金</b>: 4,644 / 4,646<br><b>白銀</b>: 70.78 / 71.03<br><b>鉑金</b>: 1,891 / 1,901<br><b>鈀金</b>: 1,413 / 1,453<br><b>美匯</b>: 31.93 / 32.03</div>
+        <h2>🇹🇼 台灣實時行情 (自動換算)</h2>
+        <table class="price-table">
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>原始報價 (盎司/台幣)</th>
+                    <th>單位換算 (台幣)</th>
+                </tr>
+            </thead>
+            <tbody id="taiwan-data">
+                </tbody>
+        </table>
+
+        <div class="intl-box">
+            <div style="font-size: 0.9em; color: #aaa;">🌍 國際黃金現貨 (PAXG/USD)</div>
+            <div class="intl-price" id="gold-price">載入中...</div>
+            <div style="font-size: 0.8em; color: #888;">最後更新：<span id="update-time">--</span></div>
         </div>
-
-        <hr>
-
-        <h3>🌍 國際黃金 (PAXG)</h3>
-        <div class="price-box" id="gold-price">國際來源獲取失敗</div>
-        <p class="time">最後更新時間：<span id="update-time">2026-04-02 05:39:18 (UTC)</span></p>
+        
+        <div class="footer">資料來源：絢麗貴金屬、GoldAPI / 自動每分鐘更新</div>
     </div>
 </body>
 </html>
