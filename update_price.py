@@ -6,7 +6,7 @@ import re
 OZ_TO_G = 31.1035
 G_TO_TAEL = 37.5
 
-# 2. 定義 HTML 模板 (將 HTML 直接寫在 Python 裡)
+# 2. HTML 模板
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -41,7 +41,7 @@ HTML_TEMPLATE = """
                 </tr>
             </thead>
             <tbody>
-                {tw_rows}
+                {tw_content}
             </tbody>
         </table>
         <div class="intl-box">
@@ -56,13 +56,11 @@ HTML_TEMPLATE = """
 """
 
 def get_data():
+    # --- 抓取台灣數據 ---
     tw_url = "https://pm.shiny.com.tw/ajax_chartupdate.php?w=arw"
     headers = {'User-Agent': 'Mozilla/5.0'}
-    tw_rows = ""
-    intl_price = "暫無數據"
-    
+    tw_final_rows = ""
     try:
-        # 抓取台灣數據
         resp = requests.get(tw_url, headers=headers, timeout=15)
         resp.encoding = 'utf-8'
         raw = resp.text
@@ -74,26 +72,43 @@ def get_data():
                 sell_oz = float(match.group(2).replace(',', ''))
                 buy_g, sell_g = buy_oz/OZ_TO_G, sell_oz/OZ_TO_G
                 buy_t, sell_t = buy_g*G_TO_TAEL, sell_g*G_TO_TAEL
-                tw_rows += f"<tr><td class='cat-name'>{label}</td><td class='buy-sell'>{buy_oz:,.0f} / {sell_oz:,.0f}</td><td><span class='converted'>每公克：{buy_g:,.2f} / {sell_g:,.2f}</span><span class='converted'>每台兩：{buy_t:,.0f} / {sell_t:,.0f}</span></td></tr>"
+                tw_final_rows += f"<tr><td class='cat-name'>{label}</td><td class='buy-sell'>{buy_oz:,.0f} / {sell_oz:,.0f}</td><td><span class='converted'>每公克：{buy_g:,.2f} / {sell_g:,.2f}</span><span class='converted'>每台兩：{buy_t:,.0f} / {sell_t:,.0f}</span></td></tr>"
             else:
-                tw_rows += f"<tr><td>{label}</td><td colspan='2'>解析失敗</td></tr>"
-
-        # 抓取國際數據
-        r = requests.get("https://api.gold-api.com/ge/gold", timeout=10)
-        intl_price = f"${float(r.json()['price']):,.2f}"
+                tw_final_rows += f"<tr><td>{label}</td><td colspan='2'>數據解析失敗</td></tr>"
     except Exception as e:
-        print(f"Error: {e}")
-        
-    return tw_rows, intl_price
+        tw_final_rows = f"<tr><td colspan='3'>台灣來源連線失敗: {e}</td></tr>"
+
+    # --- 抓取國際數據 (增加報錯處理) ---
+    intl_price = "暫無數據"
+    try:
+        r = requests.get("https://api.gold-api.com/ge/gold", timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            intl_price = f"${float(data['price']):,.2f}"
+    except:
+        # 備援 API
+        try:
+            r = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT", timeout=5)
+            intl_price = f"${float(r.json()['price']):,.2f}"
+        except:
+            intl_price = "國際 API 連線超時"
+            
+    return tw_final_rows, intl_price
 
 if __name__ == "__main__":
-    tw, intl = get_data()
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print("開始抓取數據...")
+    current_tw, current_intl = get_data()
+    now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # 填充模板
-    final_html = HTML_TEMPLATE.format(tw_rows=tw_rows, intl_price=intl, update_time=now)
+    # 填充模板 (修正了變數名稱)
+    final_output = HTML_TEMPLATE.format(
+        tw_content=current_tw, 
+        intl_price=current_intl, 
+        update_time=now_time
+    )
     
-    # 直接覆蓋寫入檔案 (這會清空原本 3GB 的檔案，變回 幾 KB)
+    # 寫入檔案
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write(final_html)
-    print("HTML 已重新生成！")
+        f.write(final_output)
+    
+    print(f"更新完成於 {now_time}")
