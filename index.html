@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,47 +7,78 @@
     <title>貴金屬歷史監報</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .chart-container { position: relative; height: 300px; width: 100%; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #fafafa; }
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; }
+        .price-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .price-table th, .price-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .price-table th { background: #fafafa; color: #666; }
+        .chart-box { margin-top: 40px; padding: 20px; background: #fff; border: 1px solid #eee; border-radius: 12px; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 30px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>💎 實時報價與歷史走勢</h2>
-        <table>
-            <thead><tr><th>項目</th><th>原始 (盎司)</th><th>換算 (公克/台兩)</th></tr></thead>
-            <tbody>{tw_content}</tbody>
+        <h2>🇹🇼 台灣實時行情與走勢</h2>
+        <table class="price-table">
+            <thead>
+                <tr><th>項目</th><th>原始 (盎司/台幣)</th><th>換算 (公克 / 台兩)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>黃金</td><td>4,581</td><td>147.28 / 5,523</td></tr><tr><td>白銀</td><td>70</td><td>2.26 / 85</td></tr><tr><td>美匯</td><td>31.95</td><td>--</td></tr>
+            </tbody>
         </table>
 
-        <div class="chart-container"><canvas id="goldChart"></canvas></div>
-        <div class="chart-container"><canvas id="silverChart"></canvas></div>
-        <div class="chart-container"><canvas id="usdChart"></canvas></div>
+        <div class="chart-box">
+            <h3>📈 黃金走勢 (TWD/oz)</h3>
+            <div class="chart-container"><canvas id="goldChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>📈 白銀走勢 (TWD/oz)</h3>
+            <div class="chart-container"><canvas id="silverChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>📈 美元匯率 (TWD)</h3>
+            <div class="chart-container"><canvas id="usdChart"></canvas></div>
+        </div>
 
-        <p style="font-size: 12px; color: #999; text-align: center;">最後更新: {update_time} (UTC)</p>
+        <div class="footer">
+            最後更新：2026-04-02 06:07:22 (UTC) | 保存筆數：1
+        </div>
     </div>
 
     <script>
-        const rawData = {history_json};
+        const rawData = [{"time": "06:07", "gold": 4581.0, "silver": 70.42, "usd": 31.95}];
         const labels = rawData.map(d => d.time);
 
-        function createChart(id, label, data, color) {
+        function draw(id, label, data, color) {
             new Chart(document.getElementById(id), {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: label, data: data, borderColor: color, fill: false, tension: 0.1 }]
+                    datasets: [{ 
+                        label: label, 
+                        data: data, 
+                        borderColor: color, 
+                        backgroundColor: color + '22',
+                        fill: true, 
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    scales: { y: { beginAtZero: false } }
+                }
             });
         }
 
-        createChart('goldChart', '黃金 (TWD/oz)', rawData.map(d => d.gold), '#d4af37');
-        createChart('silverChart', '白銀 (TWD/oz)', rawData.map(d => d.silver), '#999');
-        createChart('usdChart', '美匯 (TWD)', rawData.map(d => d.usd), '#2ecc71');
+        draw('goldChart', '黃金', rawData.map(d => d.gold), '#d4af37');
+        draw('silverChart', '白銀', rawData.map(d => d.silver), '#999999');
+        draw('usdChart', '美元匯率', rawData.map(d => d.usd), '#2ecc71');
     </script>
 </body>
 </html>
