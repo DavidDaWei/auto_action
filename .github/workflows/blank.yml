@@ -2,11 +2,14 @@ name: Update Metal Price
 
 on:
   schedule:
-    # 這裡設定每分鐘執行一次 (GitHub 實際上會有延遲)
-    - cron: '* * * * *'
+    - cron: '*/5 * * * *' # 改為每 5 分鐘跑一次比較穩，GitHub 比較不會阻擋
   push:
     branches: [ "main" ]
   workflow_dispatch: 
+
+env:
+  # 解決你看到的 Node.js 20 警告，強制使用 Node 24
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build_and_deploy:
@@ -19,7 +22,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        # 修正處：補上了 actions/ 前綴
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -31,8 +33,14 @@ jobs:
         run: python update_price.py
 
       - name: Commit and Push changes
+        # 這裡優化了邏輯：只有當 index.html 有變動時才執行 commit，避免 Exit Code 1
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update price: $(date)" && git push)
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update price: $(date)"
+            git push
+          fi
