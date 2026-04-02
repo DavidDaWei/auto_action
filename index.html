@@ -4,55 +4,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>貴金屬歷史監報</title>
+    <title>貴金屬實時走勢監報</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; }
+        h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; color: #444; }
         .price-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
         .price-table th, .price-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        .price-table th { background: #fafafa; color: #666; }
-        .chart-box { margin-top: 40px; padding: 20px; background: #fff; border: 1px solid #eee; border-radius: 12px; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
+        .price-table th { background: #fafafa; color: #666; font-weight: 600; }
+        .cat-name { font-weight: bold; color: #34006e; }
+        .main-price { font-family: monospace; font-weight: bold; color: #7129c2; font-size: 1.1em; }
+        .converted { font-size: 0.85em; color: #555; background: #fdf6e3; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; line-height: 1.5; }
+        .chart-box { margin-top: 30px; padding: 20px; background: #fff; border: 1px solid #eee; border-radius: 12px; }
+        .chart-container { position: relative; height: 250px; width: 100%; }
         .footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 30px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🇹🇼 台灣實時行情與走勢</h2>
+        <h2>🇹🇼 台灣實時行情與走勢 (台幣計價)</h2>
         <table class="price-table">
             <thead>
-                <tr><th>項目</th><th>原始 (盎司/台幣)</th><th>換算 (公克 / 台兩)</th></tr>
+                <tr>
+                    <th>項目</th>
+                    <th>原始報價 (每公克)</th>
+                    <th>單位換算 (每盎司 / 每台兩)</th>
+                </tr>
             </thead>
             <tbody>
-                <tr><td>黃金</td><td>4,581</td><td>147.28 / 5,523</td></tr><tr><td>白銀</td><td>70</td><td>2.26 / 85</td></tr><tr><td>美匯</td><td>31.95</td><td>--</td></tr>
+                
+            <tr>
+                <td class='cat-name'>黃金</td>
+                <td class='main-price'>4,580 元/g</td>
+                <td>
+                    <span class='converted'>每台兩：171,750 元</span>
+                    <span class='converted'>每盎司：142,454 元</span>
+                </td>
+            </tr>
+            
+            <tr>
+                <td class='cat-name'>白銀</td>
+                <td class='main-price'>70 元/g</td>
+                <td>
+                    <span class='converted'>每台兩：2,622 元</span>
+                    <span class='converted'>每盎司：2,174 元</span>
+                </td>
+            </tr>
+            <tr><td class='cat-name'>美匯</td><td class='main-price'>31.95</td><td>--</td></tr>
             </tbody>
         </table>
 
         <div class="chart-box">
-            <h3>📈 黃金走勢 (TWD/oz)</h3>
+            <h3>📈 黃金走勢 (TWD/g)</h3>
             <div class="chart-container"><canvas id="goldChart"></canvas></div>
         </div>
         <div class="chart-box">
-            <h3>📈 白銀走勢 (TWD/oz)</h3>
+            <h3>📈 白銀走勢 (TWD/g)</h3>
             <div class="chart-container"><canvas id="silverChart"></canvas></div>
         </div>
         <div class="chart-box">
-            <h3>📈 美元匯率 (TWD)</h3>
+            <h3>📈 美元匯率 (USD/TWD)</h3>
             <div class="chart-container"><canvas id="usdChart"></canvas></div>
         </div>
 
         <div class="footer">
-            最後更新：2026-04-02 06:07:22 (UTC) | 保存筆數：1
+            最後更新時間：2026-04-02 06:16:51 (UTC) | 已保存數據：2 筆
+            <br>資料來源：絢麗貴金屬自動抓取
         </div>
     </div>
 
     <script>
-        const rawData = [{"time": "06:07", "gold": 4581.0, "silver": 70.42, "usd": 31.95}];
+        const rawData = [{"time": "06:07", "gold": 4581.0, "silver": 70.42, "usd": 31.95}, {"time": "06:16", "gold": 4580.0, "silver": 69.91, "usd": 31.95}];
         const labels = rawData.map(d => d.time);
 
-        function draw(id, label, data, color) {
+        function drawChart(id, label, data, color) {
             new Chart(document.getElementById(id), {
                 type: 'line',
                 data: {
@@ -71,14 +97,14 @@
                     responsive: true, 
                     maintainAspectRatio: false,
                     interaction: { intersect: false, mode: 'index' },
-                    scales: { y: { beginAtZero: false } }
+                    scales: { y: { beginAtZero: false, ticks: { precision: 2 } } }
                 }
             });
         }
 
-        draw('goldChart', '黃金', rawData.map(d => d.gold), '#d4af37');
-        draw('silverChart', '白銀', rawData.map(d => d.silver), '#999999');
-        draw('usdChart', '美元匯率', rawData.map(d => d.usd), '#2ecc71');
+        drawChart('goldChart', '黃金 (公克)', rawData.map(d => d.gold), '#d4af37');
+        drawChart('silverChart', '白銀 (公克)', rawData.map(d => d.silver), '#999999');
+        drawChart('usdChart', '美元匯率', rawData.map(d => d.usd), '#2ecc71');
     </script>
 </body>
 </html>
