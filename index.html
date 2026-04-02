@@ -2,20 +2,30 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>貴金屬價格監控</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-        .price-box { font-size: 2em; color: #d4af37; margin: 20px; }
-        .time { color: #666; }
+        body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .taiwan-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9em; line-height: 1.6; }
+        .taiwan-box h3 { margin-top: 0; color: #795548; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .price-box { font-size: 2.2em; color: #d4af37; font-weight: bold; margin: 10px 0; }
+        .time { color: #888; font-size: 0.8em; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #34006e; color: white; margin-right: 5px; }
     </style>
 </head>
 <body>
-    <h1>實時貴金屬價格</h1>
-    <div class="price-box" id="gold-price">$4,658.06 USD</div>
-    <p class="time">最後更新時間：<span id="update-time">2026-04-02 05:31:15 (UTC)</span></p>
-    
-    <script>
-        // 這裡可以放一些前端邏輯，或者乾脆讓 Python 直接改 HTML 內容
-    </script>
+    <div class="container">
+        <div class="taiwan-box">
+            <h3>🇹🇼 台灣實時行情 (炫麗)</h3>
+            <div id="taiwan-data">載入中...</div>
+        </div>
+
+        <hr>
+
+        <h3>🌍 國際黃金 (PAXG)</h3>
+        <div class="price-box" id="gold-price">載入中...</div>
+        <p class="time">最後更新時間：<span id="update-time">--</span></p>
+    </div>
 </body>
 </html>
