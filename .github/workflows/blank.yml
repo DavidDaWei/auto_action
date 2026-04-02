@@ -35,7 +35,19 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # 重要：先拉取遠端最新資料，避免 data.json 衝突
-          git pull --rebase origin main
+          
+          # 1. 先把改動過的檔案加入暫存區
           git add index.html data.json
-          git diff --staged --quiet || (git commit -m "Update prices and charts" && git push)
+          
+          # 2. 檢查有沒有檔案變動，如果有才執行 Commit 與 Push
+          if ! git diff --staged --quiet; then
+            git commit -m "Update prices and charts: $(date)"
+            
+            # 3. 關鍵：Commit 完後再執行 rebase，把遠端的紀錄拉下來接在剛才的 commit 之前
+            git pull --rebase origin main
+            
+            # 4. 推送到 GitHub
+            git push
+          else
+            echo "No changes detected, skipping push."
+          fi
