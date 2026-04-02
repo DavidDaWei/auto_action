@@ -8,24 +8,15 @@
         body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; font-size: 1.5em; }
-        
         .price-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.95em; }
         .price-table th { background: #f8f9fa; color: #666; font-weight: 600; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
         .price-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        .price-table tr:hover { background: #fffdf5; }
-        
-        .cat-name { font-weight: bold; color: #34006e; width: 80px; }
-        .buy-sell { color: #7129c2; font-family: monospace; font-weight: 600; }
-        .converted { font-size: 0.85em; color: #666; background: #fdf6e3; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; }
-        
+        .cat-name { font-weight: bold; color: #34006e; width: 70px; }
+        .buy-sell { color: #7129c2; font-family: monospace; font-weight: 600; font-size: 1.1em; }
+        .converted { font-size: 0.85em; color: #555; background: #fdf6e3; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; line-height: 1.5; }
         .intl-box { text-align: center; background: #333; color: #d4af37; padding: 20px; border-radius: 12px; margin-top: 20px; }
         .intl-price { font-size: 2.5em; font-weight: bold; margin: 5px 0; }
         .footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 20px; }
-        
-        @media (max-width: 600px) {
-            .price-table { font-size: 0.85em; }
-            .container { padding: 15px; }
-        }
     </style>
 </head>
 <body>
@@ -36,14 +27,18 @@
                 <tr>
                     <th>項目</th>
                     <th>原始報價 (盎司/台幣)</th>
-                    <th>單位換算 (台幣)</th>
+                    <th>單位換算 (買入 / 賣出)</th>
                 </tr>
             </thead>
-            <tbody id="taiwan-data"><b>黃金</b>: 4,646 / 4,648<br><b>白銀</b>: 70.89 / 71.14<br><b>鉑金</b>: 1,895 / 1,905<br><b>鈀金</b>: 1,414 / 1,454<br><b>美匯</b>: 31.93 / 32.03</div>
-            <div class="intl-price" id="gold-price">暫無數據</div>
-            <div style="font-size: 0.8em; color: #888;">最後更新：<span id="update-time">2026-04-02 05:41:43</span></div>
+            <tbody>
+                </tbody>
+        </table>
+
+        <div class="intl-box">
+            <div style="font-size: 0.9em; color: #aaa;">🌍 國際黃金現貨 (USD)</div>
+            <div class="intl-price">載入中...</div>
+            <div style="font-size: 0.8em; color: #888;">最後更新：<span id="update-time">--</span></div>
         </div>
-        
         <div class="footer">資料來源：絢麗貴金屬、GoldAPI / 自動每分鐘更新</div>
     </div>
 </body>
