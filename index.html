@@ -1,46 +1,52 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>貴金屬實時監報</title>
+    <title>貴金屬歷史監報</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h2 { border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; font-size: 1.5em; }
-        .price-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.95em; }
-        .price-table th { background: #f8f9fa; color: #666; font-weight: 600; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
-        .price-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        .cat-name { font-weight: bold; color: #34006e; width: 70px; }
-        .buy-sell { color: #7129c2; font-family: monospace; font-weight: 600; font-size: 1.1em; }
-        .converted { font-size: 0.85em; color: #555; background: #fdf6e3; padding: 4px 8px; border-radius: 4px; display: block; margin-top: 4px; line-height: 1.5; }
-        .intl-box { text-align: center; background: #333; color: #d4af37; padding: 20px; border-radius: 12px; margin-top: 20px; }
-        .intl-price { font-size: 2.5em; font-weight: bold; margin: 5px 0; }
-        .footer { text-align: center; font-size: 0.8em; color: #999; margin-top: 20px; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .chart-container { position: relative; height: 300px; width: 100%; margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #fafafa; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🇹🇼 台灣實時行情 (自動換算)</h2>
-        <table class="price-table">
-            <thead>
-                <tr>
-                    <th>項目</th>
-                    <th>原始報價 (盎司/台幣)</th>
-                    <th>單位換算 (買入 / 賣出)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td class='cat-name'>黃金</td><td class='buy-sell'>4,606 / 4,608</td><td><span class='converted'>每公克：148.09 / 148.15</span><span class='converted'>每台兩：5,553 / 5,556</span></td></tr><tr><td class='cat-name'>白銀</td><td class='buy-sell'>71 / 71</td><td><span class='converted'>每公克：2.28 / 2.28</span><span class='converted'>每台兩：85 / 86</span></td></tr><tr><td class='cat-name'>鉑金</td><td class='buy-sell'>1,888 / 1,898</td><td><span class='converted'>每公克：60.70 / 61.02</span><span class='converted'>每台兩：2,276 / 2,288</span></td></tr><tr><td class='cat-name'>鈀金</td><td class='buy-sell'>1,414 / 1,454</td><td><span class='converted'>每公克：45.46 / 46.75</span><span class='converted'>每台兩：1,705 / 1,753</span></td></tr><tr><td class='cat-name'>美匯</td><td class='buy-sell'>32 / 32</td><td><span class='converted'>每公克：1.03 / 1.03</span><span class='converted'>每台兩：38 / 39</span></td></tr>
-            </tbody>
+        <h2>💎 實時報價與歷史走勢</h2>
+        <table>
+            <thead><tr><th>項目</th><th>原始 (盎司)</th><th>換算 (公克/台兩)</th></tr></thead>
+            <tbody>{tw_content}</tbody>
         </table>
-        <div class="intl-box">
-            <div style="font-size: 0.9em; color: #aaa;">🌍 國際黃金現貨 (USD)</div>
-            <div class="intl-price">暫無數據</div>
-            <div style="font-size: 0.8em; color: #888;">最後更新：2026-04-02 05:55:41 (UTC)</div>
-        </div>
-        <div class="footer">資料來源：絢麗、GoldAPI / 自動更新</div>
+
+        <div class="chart-container"><canvas id="goldChart"></canvas></div>
+        <div class="chart-container"><canvas id="silverChart"></canvas></div>
+        <div class="chart-container"><canvas id="usdChart"></canvas></div>
+
+        <p style="font-size: 12px; color: #999; text-align: center;">最後更新: {update_time} (UTC)</p>
     </div>
+
+    <script>
+        const rawData = {history_json};
+        const labels = rawData.map(d => d.time);
+
+        function createChart(id, label, data, color) {
+            new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: label, data: data, borderColor: color, fill: false, tension: 0.1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        createChart('goldChart', '黃金 (TWD/oz)', rawData.map(d => d.gold), '#d4af37');
+        createChart('silverChart', '白銀 (TWD/oz)', rawData.map(d => d.silver), '#999');
+        createChart('usdChart', '美匯 (TWD)', rawData.map(d => d.usd), '#2ecc71');
+    </script>
 </body>
 </html>
