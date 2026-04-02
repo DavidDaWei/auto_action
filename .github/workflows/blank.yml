@@ -32,15 +32,13 @@ jobs:
       - name: Run update script
         run: python update_price.py
 
+
       - name: Commit and Push changes
-        # 這裡優化了邏輯：只有當 index.html 有變動時才執行 commit，避免 Exit Code 1
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update price: $(date)"
-            git push
-          fi
+                git config --global user.name "github-actions[bot]"
+                git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                # 先移除壞掉的大檔案，強迫 Git 歸零
+                git rm --cached index.html || echo "File already untracked"
+                git add index.html
+                git commit -m "Fix: Reset 3GB file and update price"
+                git push --force
