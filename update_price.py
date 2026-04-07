@@ -1,9 +1,9 @@
 import requests
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import re
 import json
 import os
-
 # --- 參數調整區 ---
 MAX_HISTORY = 2000  # 保存最近 100 筆資料 (若每 5 分鐘執行一次，約可保存 8 小時走勢)
 # ----------------
@@ -188,7 +188,7 @@ def process_and_save():
             """
 
     # 6. 生成最終的 index.html
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    now_str = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")
     final_content = HTML_TEMPLATE.format(
         tw_rows=tw_rows_html,
         history_json=json.dumps(history),
