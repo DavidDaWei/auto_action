@@ -188,7 +188,7 @@ def process_and_save():
             """
 
     # 6. 生成最終的 index.html
-    now_str = datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     final_content = HTML_TEMPLATE.format(
         tw_rows=tw_rows_html,
         history_json=json.dumps(history),
