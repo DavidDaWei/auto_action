@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 import re
 import json
 import os
