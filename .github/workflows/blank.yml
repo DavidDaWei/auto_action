@@ -2,7 +2,7 @@ name: Update Metal Price
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/30 * * * *'
   push:
     branches: [ "main" ]
   workflow_dispatch: 
@@ -19,6 +19,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # 取消預設的只抓取最新一筆，確保 Git 歷史完整以便處理合併
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,23 +31,28 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Prepare Git and Sync
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # 在跑 Python 之前先確保本地檔案與遠端同步
+          git pull origin main
+
       - name: Run update script
         run: python update_price.py
 
       - name: Commit and Push changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # 1. 先把改動過的檔案加入暫存區
+          # 1. 將改動加入暫存
           git add index.html data.json
           
-          # 2. 檢查有沒有檔案變動，如果有才執行 Commit 與 Push
+          # 2. 只有在有變動時才 commit
           if ! git diff --staged --quiet; then
             git commit -m "Update prices and charts: $(date)"
             
-            # 3. 關鍵：Commit 完後再執行 rebase，把遠端的紀錄拉下來接在剛才的 commit 之前
-            git pull --rebase origin main
+            # 3. 為了防止在 Python 執行期間又有別人推播，最後再做一次帶有合併策略的 pull
+            # 使用 -X ours 策略：如果真的衝突了，以「這一次執行」生成的數據為準
+            git pull --rebase origin main -X ours
             
             # 4. 推送到 GitHub
             git push
