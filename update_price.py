@@ -116,7 +116,7 @@ def get_current_data():
         resp.encoding = 'utf-8'
         raw = resp.text
         # 以目前時間 (時:分) 作為 X 軸標籤
-        point = {"time": datetime.datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")}
+        point = {"time": datetime.datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M")}
         
         # 解析數據 (抓取標籤後的第一個數值)
         for label, key in [("黃金", "gold"), ("白銀", "silver"), ("美匯", "usd")]:
