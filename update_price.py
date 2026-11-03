@@ -108,7 +108,7 @@ HTML_TEMPLATE = """
 """
 
 def get_current_data():
-    """從網站抓取當前數據"""
+    """從網站抓取 當前數據"""
     url = "https://pm.shiny.com.tw/ajax_chartupdate.php?w=arw"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     try:
